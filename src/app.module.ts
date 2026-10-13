@@ -1,21 +1,21 @@
+import 'dotenv/config';
 import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { DemoModule } from './demo/demo.module.js';
+import { HipaaSentinelModule } from './sentinel/index.js';
 
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
+const required = (name: string): string => {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing env var ${name}`);
+  return v;
+};
 
 @Module({
   imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
-    ObserveModule.forRoot({
-      appKey: 'YOUR_APP_KEY',
-      appSecret: 'YOUR_APP_SECRET',
-      serviceId: 'hipaa-sentinel',
+    HipaaSentinelModule.forRoot({
+      dbDsn: required('AUDIT_DB_DSN'),
+      jwtSecret: required('JWT_SECRET'),
     }),
+    DemoModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
