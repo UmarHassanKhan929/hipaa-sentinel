@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hipaa-sentinel demo</title>
+  <script src="/htmx.min.js"></script>
+  <style>
+    :root {
+      --bg: #191a21; --panel: #21222c; --edge: #2f3141;
+      --text: #d6d6e0; --dim: #7c7f93; --accent: #8b87f0;
+      --ok: #50fa7b; --warn: #ffb86c; --err: #ff5555;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.5 ui-monospace, Consolas, "Cascadia Mono", monospace;
+    }
+    header {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      padding: 14px 20px; border-bottom: 1px solid var(--edge);
+      background: var(--panel);
+    }
+    header h1 { font-size: 16px; margin: 0 16px 0 0; color: var(--accent); }
+    select, input, button {
+      font: inherit; color: var(--text); background: var(--bg);
+      border: 1px solid var(--edge); border-radius: 6px; padding: 6px 10px;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    #identity { margin-left: auto; color: var(--dim); }
+    main {
+      max-width: 960px; margin: 24px auto; padding: 0 20px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--edge);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .card h2 { font-size: 13px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+    .card h2 small { color: var(--dim); font-weight: normal; }
+    .status {
+      margin-left: auto; font-size: 12px; color: var(--dim);
+      border: 1px solid var(--edge); border-radius: 999px; padding: 0 8px;
+    }
+    .status.ok { color: var(--ok); border-color: var(--ok); }
+    .status.warn { color: var(--warn); border-color: var(--warn); }
+    .status.err { color: var(--err); border-color: var(--err); }
+    .out {
+      min-height: 54px; margin: 10px 0 0; padding: 10px; white-space: pre-wrap;
+      word-break: break-all; background: var(--bg); border: 1px solid var(--edge);
+      border-radius: 6px; color: var(--dim); font-size: 13px;
+    }
+    .wide { grid-column: 1 / -1; }
+    form label { display: block; margin: 8px 0 2px; color: var(--dim); font-size: 13px; }
+    form input { width: 100%; }
+    .hint { color: var(--dim); font-size: 12px; margin: 8px 0 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--edge); }
+    th { color: var(--dim); font-weight: normal; }
+    td.num { text-align: right; }
+    .s-ok { color: var(--ok); } .s-warn { color: var(--warn); } .s-err { color: var(--err); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>hipaa-sentinel</h1>
+    <select id="role">
+      <option>CLINICIAN</option>
+      <option>RESEARCHER</option>
+      <option>ADMIN</option>
+    </select>
+    <input id="userId" size="16" value="usr_dr_smith" />
+    <button onclick="signIn()">sign in</button>
+    <button onclick="signOut()">sign out</button>
+    <span id="identity">anonymous - expect 401s</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Cohort summary <small>aggregate, every role</small> <span class="status">-</span></h2>
+      <button hx-get="/api/cohorts/summary" hx-target="#cohort-out">load</button>
+      <pre class="out" id="cohort-out">click load...</pre>
+    </section>
+
+    <section class="card">
+      <h2>Patient chart <small>identifying data, clinical roles</small> <span class="status">-</span></h2>
+      <button hx-get="/api/patients/pat_1" hx-target="#chart-out">load</button>
+      <pre class="out" id="chart-out">researchers get 403 here</pre>
+    </section>
+
+    <section class="card">
+      <h2>Simulated crash <small>error masking</small> <span class="status">-</span></h2>
+      <button hx-get="/api/patients/pat_1/_simulate-crash" hx-target="#crash-out">crash it</button>
+      <pre class="out" id="crash-out">researchers get 403 here; clinicians get an opaque 500</pre>
+    </section>
+
+    <section class="card">
+      <h2>Admit patient <small>CLINICIAN / ADMIN only</small> <span class="status">-</span></h2>
+      <form hx-post="/api/patients" hx-target="#admit-out">
+        <label for="name">name</label>
+        <input id="name" name="name" value="Synthetic Patient" />
+        <label for="dob">date of birth</label>
+        <input id="dob" name="dob" value="1950-01-01" />
+        <p><button>admit</button></p>
+      </form>
+      <pre class="out" id="admit-out">researchers get 403 here too</pre>
+    </section>
+
+    <section class="card wide">
+      <h2>Audit trail <small>ADMIN only - who examined the logs is logged too</small> <span class="status">-</span></h2>
+      <button hx-get="/api/audit?limit=15&format=html" hx-target="#audit-body" hx-swap="innerHTML">refresh</button>
+      <table>
+        <thead>
+          <tr><th>time (utc)</th><th>user</th><th>role</th><th>action</th><th>request</th><th>status</th><th>ms</th></tr>
+        </thead>
+        <tbody id="audit-body">
+          <tr><td colspan="7" class="hint">sign in as ADMIN and refresh</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card wide">
+      <h2>What just happened <span class="status">-</span></h2>
+      <p class="hint">
+        every request above is written to the <code>audit.events</code> table with user, role,
+        action and status - and the writer role that owns that table has no UPDATE or DELETE,
+        so the trail cannot be edited afterwards.
+      </p>
+      <button hx-get="/health" hx-target="#health-out">health check</button>
+      <pre class="out" id="health-out"></pre>
+    </section>
+  </main>
+
+  <script>
+    let TOKEN = null;
+
+    htmx.on('htmx:configRequest', (e) => {
+      if (TOKEN) e.detail.headers['Authorization'] = 'Bearer ' + TOKEN;
+    });
+
+    // render 4xx/5xx bodies instead of dropping them
+    htmx.on('htmx:beforeSwap', (e) => {
+      if (e.detail.xhr.status >= 400) {
+        e.detail.shouldSwap = true;
+        e.detail.isError = false;
+      }
+    });
+
+    htmx.on('htmx:afterRequest', (e) => {
+      const badge = e.detail.elt.closest('.card')?.querySelector('.status');
+      if (!badge) return;
+      const s = e.detail.xhr.status;
+      badge.textContent = s;
+      badge.className = 'status ' + (s < 300 ? 'ok' : s < 500 ? 'warn' : 'err');
+    });
+
+    async function signIn() {
+      const role = document.getElementById('role').value;
+      const userId = document.getElementById('userId').value || 'usr_demo_user';
+      try {
+        const res = await fetch('/api/auth/demo-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role, userId }),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        TOKEN = (await res.json()).token;
+        document.getElementById('identity').textContent = 'signed in as ' + role + ' (' + userId + ')';
+      } catch (err) {
+        document.getElementById('identity').textContent = 'sign-in failed - is the API running?';
+      }
+    }
+
+    function signOut() {
+      TOKEN = null;
+      document.getElementById('identity').textContent = 'anonymous - expect 401s';
+    }
+  </script>
+</body>
+</html>

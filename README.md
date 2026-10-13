@@ -27,6 +27,8 @@ The recording above runs the core flow against a live API:
 
 Re-record after changes with [vhs](https://github.com/charmbracelet/vhs): `vhs doc/demo.tape` (needs `docker compose up -d` and port 3000 free). Tokens are minted locally with `node scripts/mint-token.cjs <ROLE> <USER_ID>`.
 
+Prefer clicking over curling? Start the API and open `http://localhost:3000` - a minimal htmx UI (served by the API itself, no build step) drives the same flow: pick a role, sign in, and watch each panel show the status code the server returns.
+
 ---
 
 ## Technical Safeguards Mapping

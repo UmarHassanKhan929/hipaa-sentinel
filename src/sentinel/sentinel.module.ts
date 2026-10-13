@@ -36,7 +36,7 @@ export class HipaaSentinelModule implements NestModule {
         { provide: APP_GUARD, useClass: MinimumNecessaryGuard },
         { provide: APP_FILTER, useClass: SanitizingExceptionFilter },
       ],
-      exports: [AuditWriterService],
+      exports: [AuditWriterService, JwtModule],
     };
   }
 

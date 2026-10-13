@@ -11,6 +11,7 @@ export interface RouteClassification {
 
 const PATIENTS = /^\/api\/patients(?:\/([^/]+))?(?:\/(.+))?$/i;
 const COHORTS = /^\/api\/cohorts(?:\/.*)?$/i;
+const AUDIT = /^\/api\/audit(?:\/.*)?$/i;
 const FHIR = /^\/(Observation|Condition)(?:\/([^/]+))?$/i;
 
 const NOT_AUDITED: RouteClassification = {
@@ -33,6 +34,11 @@ export function classifyRoute(originalUrl: string): RouteClassification {
 
   if (COHORTS.test(path)) {
     // De-identified aggregates: still audited (who looked at what), but not patient-level.
+    return { audited: true, patientLevel: false, resource: path };
+  }
+
+  if (AUDIT.test(path)) {
+    // Examining the trail is itself an auditable act.
     return { audited: true, patientLevel: false, resource: path };
   }
 
