@@ -28,7 +28,7 @@ export class RolesGuard implements CanActivate {
   }
 }
 
-/** FR-5 (Privacy Rule § 164.502(b)): RESEARCHER may only use aggregate endpoints. */
+/** Privacy Rule § 164.502(b): RESEARCHER may only use aggregate endpoints. */
 @Injectable()
 export class MinimumNecessaryGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {

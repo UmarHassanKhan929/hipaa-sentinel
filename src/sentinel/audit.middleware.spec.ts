@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { AuditMiddleware } from './audit.middleware.js';
 
-describe('AuditMiddleware overhead (acceptance criterion 3)', () => {
+describe('AuditMiddleware overhead', () => {
   it('p99 of the synchronous path is under 3 ms', () => {
     const events: unknown[] = [];
     const mw = new AuditMiddleware({

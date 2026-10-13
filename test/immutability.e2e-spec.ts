@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 
-describe('audit.events immutability (acceptance criterion 2)', () => {
+describe('audit.events immutability', () => {
   const writer = new Pool({ connectionString: process.env.AUDIT_DB_DSN });
   const owner = new Pool({ connectionString: process.env.OWNER_DSN });
 

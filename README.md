@@ -2,6 +2,10 @@
 
 Zero-trust forensic auditing and technical safeguard middleware for healthcare APIs.
 
+<p align="center">
+  <img src="doc/demo.gif" alt="hipaa-sentinel demo: append-only audit log, role-based access, minimum necessary, error masking" width="840">
+</p>
+
 ---
 
 > CAUTION. No library makes an app "HIPAA compliant". Compliance is organizational (risk analysis, BAAs, policies, training). This project supports Security Rule technical safeguards. Use synthetic data only, never real PHI.
@@ -9,6 +13,19 @@ Zero-trust forensic auditing and technical safeguard middleware for healthcare A
 ## Overview
 
 Under **45 CFR Part 164 Subpart C**, handling electronic Protected Health Information (ePHI) requires technical safeguards. `hipaa-sentinel` provides drop-in HTTP middleware to enforce audit logging, access controls, and data-leak prevention on API gateways.
+
+## Demo
+
+The recording above runs the core flow against a live API:
+
+- the audit writer role cannot `UPDATE` its own table, and even the table owner cannot `DELETE` (append-only trigger)
+- no token → `401`
+- a `RESEARCHER` token reads de-identified aggregates (`/api/cohorts/summary`) but is denied individual charts (`403`, minimum necessary)
+- a `CLINICIAN` token reads a chart
+- the crash endpoint returns an opaque `500` with a tracking ID; the detailed stack stays in the server log only
+- every request above lands in `audit.events`
+
+Re-record after changes with [vhs](https://github.com/charmbracelet/vhs): `vhs doc/demo.tape` (needs `docker compose up -d` and port 3000 free). Tokens are minted locally with `node scripts/mint-token.cjs <ROLE> <USER_ID>`.
 
 ---
 

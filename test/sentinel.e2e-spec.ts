@@ -28,7 +28,7 @@ describe('hipaa-sentinel (e2e)', () => {
   afterAll(() => app.close());
   beforeEach(() => (events.length = 0));
 
-  describe('FR-4 error masking (acceptance criterion 1)', () => {
+  describe('error masking', () => {
     it('returns only an opaque error + tracking ID on a simulated DB crash', async () => {
       const res = await request(app.getHttpServer())
         .get('/api/patients/pat_1/_simulate-crash')
@@ -49,7 +49,7 @@ describe('hipaa-sentinel (e2e)', () => {
     });
   });
 
-  describe('FR-5 minimum necessary', () => {
+  describe('minimum necessary', () => {
     it('blocks RESEARCHER from individual records', async () => {
       await request(app.getHttpServer())
         .get('/api/patients/pat_1')
@@ -70,7 +70,7 @@ describe('hipaa-sentinel (e2e)', () => {
     });
   });
 
-  describe('FR-2 audit entries', () => {
+  describe('audit entries', () => {
     it('records a successful read with all required fields', async () => {
       await request(app.getHttpServer())
         .get(
