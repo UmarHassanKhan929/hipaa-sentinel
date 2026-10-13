@@ -64,10 +64,6 @@ Re-record after changes with [vhs](https://github.com/charmbracelet/vhs): `vhs d
 
 ## Production Hardening
 
-> a Postgres superuser can disable triggers. Real WORM needs the DB superuser locked away plus log shipping to something like S3 Object Lock.
-
----
-
-> regex classification fails open if someone adds a new ePHI route that doesn't match. Stretch goal: an @Ephi() decorator on controllers as the source of truth, with the regexes as a safety net.
-
-> stack traces and DB error messages can themselves contain ePHI. We log only method + path (no query string) + stack. In production, ship these logs only to a BAA-covered provider and add redaction.
+- **The append-only guarantee ends at the superuser.** A Postgres superuser can disable triggers. Real WORM means locking the DB superuser account away and shipping logs to something like S3 Object Lock.
+- **Route classification is regex-based and fails open.** A new ePHI route that doesn't match a pattern slips through unclassified. Planned: an `@Ephi()` decorator on controllers as the source of truth, with the regexes as a safety net (see `doc/ROADMAP.md`).
+- **Stack traces can carry ePHI.** We log only method + path (no query string) plus the stack. In production, ship these logs only to a BAA-covered provider and add redaction.
